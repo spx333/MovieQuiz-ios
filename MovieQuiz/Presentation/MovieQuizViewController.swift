@@ -104,9 +104,9 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func show(quiz step: QuizStepViewModel) {
-        counterLabel.text=step.questionNumber
-        imageView.image=step.image
-        textLabel.text=step.question
+        counterLabel.text = step.questionNumber
+        imageView.image = step.image
+        textLabel.text = step.question
     }
     
     private func show(quiz result: QuizResultsViewModel) {
@@ -117,7 +117,7 @@ final class MovieQuizViewController: UIViewController {
 
         let action = UIAlertAction(title: result.buttonText, style: .default) { _ in
             self.currentQuestionIndex = 0
-            self.correctAnswers=0
+            self.correctAnswers = 0
             
             let firstQuestion = self.questions[self.currentQuestionIndex]
             let viewModel = self.convert(model: firstQuestion)
@@ -131,7 +131,7 @@ final class MovieQuizViewController: UIViewController {
     
     private func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
-            correctAnswers+=1
+            correctAnswers += 1
         }
         
         imageView.layer.masksToBounds = true
@@ -139,13 +139,13 @@ final class MovieQuizViewController: UIViewController {
         imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
         imageView.layer.cornerRadius = 20
         
-        noButton.isEnabled=false
-        yesButton.isEnabled=false
+        noButton.isEnabled = false
+        yesButton.isEnabled = false
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.imageView.layer.borderWidth = 0
-            self.noButton.isEnabled=true
-            self.yesButton.isEnabled=true
+            self.noButton.isEnabled = true
+            self.yesButton.isEnabled = true
             self.showNextQuestionOrResults()
         }
         
@@ -153,8 +153,10 @@ final class MovieQuizViewController: UIViewController {
     
     private func showNextQuestionOrResults() {
       if currentQuestionIndex == questions.count - 1 {
-          
-          let viewModel = QuizResultsViewModel(title: "Этот раунд окончен!", text: "Ваш результат: \(correctAnswers)/\(questions.count)", buttonText: "Сыграть еще раз!")
+        let viewModel = QuizResultsViewModel(
+            title: "Этот раунд окончен!",
+            text: "Ваш результат: \(correctAnswers)/\(questions.count)",
+            buttonText: "Сыграть еще раз!")
           show(quiz: viewModel)
                   
       } else {
@@ -167,7 +169,4 @@ final class MovieQuizViewController: UIViewController {
           show(quiz: viewModel)
       }
     }
-    
-    
-    
 }
