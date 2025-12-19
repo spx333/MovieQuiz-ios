@@ -9,7 +9,7 @@ import Foundation
 
 final class StatisticService: StatisticServiceProtocol {
     
-    private let storage: UserDefaults = .standard
+    // MARK: - Constants
     
     private enum Keys: String {
         case gamesCount
@@ -19,6 +19,12 @@ final class StatisticService: StatisticServiceProtocol {
         case totalCorrectAnswers
         case totalQuestionAsked
     }
+    
+    // MARK: - Dependencies
+    
+    private let storage: UserDefaults = .standard
+    
+    // MARK: - StatisticServiceProtocol (Public API)
     
     var gamesCount: Int {
         get {
@@ -44,6 +50,34 @@ final class StatisticService: StatisticServiceProtocol {
         }
     }
     
+    var totalAccuracy: Double {
+        get {
+            if (totalQuestionAsked > 0) {
+                return Double(totalCorrectAnswers) / Double(totalQuestionAsked) * 100
+            }
+            else {
+                return 0
+            }
+        }
+    }
+    
+    // MARK: - Public Methods
+    
+    func store(correct count: Int, total amount: Int) {
+        
+        let currentGame = GameResult(correct: count, total: amount, date: Date())
+        
+        gamesCount += 1
+        totalCorrectAnswers += count
+        totalQuestionAsked += amount
+        
+        if currentGame.isBetterThan(bestGame) {
+            bestGame = currentGame
+        }
+    }
+    
+    // MARK: - Private Properties
+    
     private var totalCorrectAnswers: Int {
         get {
             storage.integer(forKey: Keys.totalCorrectAnswers.rawValue)
@@ -59,30 +93,6 @@ final class StatisticService: StatisticServiceProtocol {
         }
         set {
             storage.set(newValue, forKey: Keys.totalQuestionAsked.rawValue)
-        }
-    }
-    
-    var totalAccuracy: Double {
-        get {
-            if (totalQuestionAsked > 0) {
-                return Double(totalCorrectAnswers) / Double(totalQuestionAsked) * 100
-            }
-            else {
-                return 0
-            }
-        }
-    }
-    
-    func store(correct count: Int, total amount: Int) {
-        
-        let currentGame = GameResult(correct: count, total: amount, date: Date())
-        
-        gamesCount += 1
-        totalCorrectAnswers += count
-        totalQuestionAsked += amount
-        
-        if currentGame.isBetterThan(bestGame) {
-            bestGame = currentGame
         }
     }
 }

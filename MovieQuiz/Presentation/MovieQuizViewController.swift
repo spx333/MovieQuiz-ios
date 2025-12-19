@@ -2,6 +2,17 @@ import UIKit
 
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
+    // MARK: - IBOutlets
+    
+    @IBOutlet weak private var counterLabel: UILabel!
+    @IBOutlet weak private var imageView: UIImageView!
+    @IBOutlet weak private var textLabel: UILabel!
+    
+    @IBOutlet weak private var noButton: UIButton!
+    @IBOutlet weak private var yesButton: UIButton!
+    
+    // MARK: - Private Properties
+    
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
     
@@ -11,39 +22,26 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private var alertPresenter = AlertPresenter()
     
-    private var statisticService: StatisticServiceProtocol = StatisticService()
-    
-    @IBOutlet weak private var counterLabel: UILabel!
-    @IBOutlet weak private var imageView: UIImageView!
-    @IBOutlet weak private var textLabel: UILabel!
-    
-    @IBOutlet weak private var noButton: UIButton!
-    @IBOutlet weak private var yesButton: UIButton!
+    private var statisticService: StatisticServiceProtocol?
     
     // MARK: - Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let statisticService = StatisticService()
+        self.statisticService = statisticService
         
         let questionFactory = QuestionFactory()
         questionFactory.setup(delegate: self)
         self.questionFactory = questionFactory
         
         self.questionFactory?.requestNextQuestion()
+        
+        
     }
     
-    // MARK: - QuestionFactoryDelegate
-    func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {
-            return
-        }
-        
-        currentQuestion = question
-        let viewModel = convert(model: question)
-        DispatchQueue.main.async { [weak self] in
-            self?.show(quiz: viewModel)
-        }
-    }
-
+    // MARK: - Actions
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else { return }
@@ -56,7 +54,23 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         let givenAnswer = true
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
+    
+    // MARK: - QuestionFactoryDelegate
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {
+            return
+        }
         
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+            self?.show(quiz: viewModel)
+        }
+    }
+    
+    // MARK: - Private Methods
+    
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel(
                image: UIImage(named: model.image) ?? UIImage(),
@@ -116,11 +130,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func showNextQuestionOrResults() {
       if currentQuestionIndex == questionsAmount - 1 {
+          guard let statisticService = self.statisticService else { return }
           
           statisticService.store(correct: correctAnswers, total: questionsAmount)
           
           let text = """
-          
           Ваш результат \(correctAnswers) из \(questionsAmount)
           Количество сыгранных квизов: \(String(describing: statisticService.gamesCount))
           Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total)  (\(statisticService.bestGame.date.dateTimeString))
