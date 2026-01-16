@@ -17,16 +17,60 @@ final class MovieQuizPresenter {
     
     let questionsAmount: Int = 10
     
-    func yesButtonClicked() {
+    var correctAnswers = 0
+    
+    var questionFactory: QuestionFactoryProtocol?
+    
+    private var statisticService: StatisticServiceProtocol = StatisticService()
+    
+    private func didAnswer(isYes: Bool) {
         guard let currentQuestion = currentQuestion else { return }
-        let givenAnswer = true
+        let givenAnswer = isYes
         viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
     
+    func showNextQuestionOrResults() {
+        if self.isLastQuestion() {
+          let text = """
+          Ваш результат \(correctAnswers) из \(questionsAmount)
+          Количество сыгранных квизов: \(String(describing: statisticService.gamesCount))
+          Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total)  (\(statisticService.bestGame.date.dateTimeString))
+          Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%
+          """
+          
+          let viewModel = QuizResultsViewModel(
+            title: "Этот раунд окончен!",
+            text: text,
+            buttonText: "Сыграть еще раз!")
+          
+            viewController?.show(quiz: viewModel)
+                  
+      } else {
+          
+          self.switchToNextQuestion()
+          
+          questionFactory?.requestNextQuestion()
+          
+          
+      }
+    }
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else { return }
+        
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+            self?.viewController?.show(quiz: viewModel)
+        }
+    }
+    
+    func yesButtonClicked() {
+        didAnswer(isYes: true)
+    }
+    
     func noButtonClicked() {
-        guard let currentQuestion = currentQuestion else { return }
-        let givenAnswer = false
-        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+        didAnswer(isYes: false)
     }
     
     func isLastQuestion() -> Bool {
